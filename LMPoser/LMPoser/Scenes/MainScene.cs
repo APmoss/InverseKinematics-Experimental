@@ -1,8 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using LMPoser.Objects;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Project_GE.Framework.Input;
 using Project_GE.Framework.SceneManagement;
+using System;
 
 namespace LMPoser.Scenes {
 	public class MainScene : Scene2D {
@@ -12,102 +14,77 @@ namespace LMPoser.Scenes {
 
 		private Matrix world = Matrix.Identity;
 
-		private VertexDeclaration vertexDec;
-		private VertexPositionColor[] vertices;
-		private VertexBuffer vertexBuffer;
-
-		private short[] triangles;
-
 		private Camera3D camera;
-		private GameTime time;
+
+		private Bone2DChain baseBone;
 
 		public override void Load(ContentManager content) {
 			graphics = SceneManager.GraphicsDevice;
 			camera = new Camera3D();
-			
-			InitVertices();
-			InitTriangles();
+
+			effect = new BasicEffect(graphics);
+			effect.VertexColorEnabled = true;
 
 			rasterizer = new RasterizerState();
 			rasterizer.FillMode = FillMode.WireFrame;
 			rasterizer.CullMode = CullMode.None;
 
+			InitBones();
+
 			base.Load(content);
 		}
 
 		public override void Input(InputManager input) {
-			if (time != null) {
-				camera.Input(input, time);
-			}
+			camera.Input(input, GameTime);
+
+			// TODO: dimensions
+			baseBone.Angle = (float)Math.Atan2(
+				-(input.CurrentMousePosition.Y - (720 / 2)),
+				input.CurrentMousePosition.X - (1280 / 2)
+			);
 
 			base.Input(input);
 		}
 
-		public override void Update(GameTime time) {
-			this.time = time;
+		public override void Update() {
+			UpdateEffect();
 
-			effect.World = world;
-			effect.View = camera.GetViewMatrix();
-			effect.Projection = camera.GetPerspectiveProjectionMatrix();
-
-			base.Update(time);
+			base.Update();
 		}
 
 		public override void Draw() {
+			DrawBones();
+
+			base.Draw();
+		}
+
+		private void InitBones() {
+			baseBone = new Bone2DChain(MathHelper.ToRadians(30f));
+
+			baseBone.Child = new Bone2DChain(
+				0f,
+				new Bone2DChain(
+					MathHelper.PiOver2
+				)
+			);
+		}
+
+		private void UpdateEffect() {
+			effect.World = world;
+			effect.View = camera.GetViewMatrix();
+			effect.Projection = camera.GetOrthographicProjectionMatrix();
+		}
+
+		private void DrawBones() {
 			foreach (var pass in effect.CurrentTechnique.Passes) {
 				pass.Apply();
 
 				graphics.RasterizerState = rasterizer;
 
-				graphics.DrawUserIndexedPrimitives(
-					PrimitiveType.TriangleList,
-					vertices,
-					0,
-					4,
-					triangles,
-					0,
-					2
-				);
+				var vertices = baseBone.GetVertices();
+
+				graphics.DrawUserPrimitives(PrimitiveType.LineList, vertices.ToArray(), 0, vertices.Count / 2);
 			}
-
-			base.Draw();
-		}
-
-		private void InitVertices() {
-			vertexDec = new VertexDeclaration(
-				new VertexElement[] {
-					new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
-					new VertexElement(12, VertexElementFormat.Color, VertexElementUsage.Color, 0)
-				}
-			);
-
-			effect = new BasicEffect(graphics);
-			effect.VertexColorEnabled = true;
-
-			vertices = new VertexPositionColor[4] {
-				new VertexPositionColor(
-					new Vector3(0, 0, 0), Color.Red
-				),
-				new VertexPositionColor(
-					new Vector3(1, 0, 0), Color.Gray
-				),
-				new VertexPositionColor(
-					new Vector3(1, -1, 0), Color.Green
-				),
-				new VertexPositionColor(
-					new Vector3(0, -1, 0), Color.Blue
-				)
-			};
-
-			vertexBuffer = new VertexBuffer(graphics, vertexDec, 4, BufferUsage.None);
-
-			vertexBuffer.SetData(vertices);
-		}
-
-		private void InitTriangles() {
-			triangles = new short[] {
-				0, 1, 3, 1, 2, 3
-			};
 		}
 	}
 }

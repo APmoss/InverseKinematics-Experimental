@@ -16,9 +16,15 @@ namespace LMPoser {
 			get; set;
 		} = MathHelper.ToRadians(60f);
 
-		public float AspectRatio {
+		public Vector2 Dimensions {
 			get; set;
-		} = 1280f / 720f;
+		} = new Vector2(1280, 720);
+
+		public float AspectRatio {
+			get {
+				return Dimensions.X / Dimensions.Y;
+			}
+		}
 
 		public float NearPlaneDistance {
 			get; set;
@@ -29,7 +35,7 @@ namespace LMPoser {
 
 		public void Input(InputManager input, GameTime time) {
 			var delta = (float)time.ElapsedGameTime.TotalSeconds;
-			var speed = 5 * delta;
+			var speed = 100 * delta;
 
 			if (input.IsKeyDown(Keys.W)) {
 				Position += Vector3.Transform(Vector3.Forward, Orientation) * speed;
@@ -75,8 +81,7 @@ namespace LMPoser {
 		}
 
 		public Matrix GetOrthographicProjectionMatrix() {
-			// TODO: change size to dimenstion or whatever
-			return Matrix.CreateOrthographic(1280f, 720f, NearPlaneDistance, FarPlaneDistance);
+			return Matrix.CreateOrthographic(Dimensions.X, Dimensions.Y, NearPlaneDistance, FarPlaneDistance);
 		}
 
 		public Matrix GetPerspectiveProjectionMatrix() {
