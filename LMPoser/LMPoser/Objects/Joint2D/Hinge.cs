@@ -3,21 +3,21 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace LMPoser.Objects {
-	public class Bone2DChain {
+namespace LMPoser.Objects.Joint2D {
+	public class Hinge {
 		private const float DEFAULT_LENGTH = 100f;
 
-		private Bone2DChain _child;
+		private Hinge _child;
 
 		public float Angle {
 			get; set;
 		}
 
 		public float Length {
-			get; set;
+			get; private set;
 		}
 
-		public Vector2 Position {
+		public Vector2 Resultant {
 			get {
 				return new Vector2(
 					(float)Math.Cos(Angle),
@@ -26,21 +26,32 @@ namespace LMPoser.Objects {
 			}
 		}
 
-		public Vector2 GlobalPosition {
+		public Vector2 GlobalResultant {
 			get {
 				if (Parent == null) {
-					return Position;
+					return Resultant;
 				}
 				else {
-					return Position + Parent.GlobalPosition;
+					return Resultant + Parent.GlobalResultant;
 				}
 			}
 		}
 
-		public Bone2DChain Parent {
+		public Vector2 GlobalPosition {
+			get {
+				if (Parent == null) {
+					return Vector2.Zero;
+				}
+				else {
+					return Parent.GlobalResultant;
+				}
+			}
+		}
+
+		public Hinge Parent {
 			get; private set;
 		}
-		public Bone2DChain Child {
+		public Hinge Child {
 			get {
 				return _child;
 			}
@@ -52,22 +63,22 @@ namespace LMPoser.Objects {
 			}
 		}
 
-		public Bone2DChain(float angle)
+		public Hinge(float angle)
 			: this(angle, DEFAULT_LENGTH) {
 		}
-		public Bone2DChain(float angle, float length)
+		public Hinge(float angle, float length)
 			: this(angle, length, null) {
 		}
-		public Bone2DChain(float angle, Bone2DChain child)
+		public Hinge(float angle, Hinge child)
 			: this(angle, DEFAULT_LENGTH, child) {
 		}
-		public Bone2DChain(float angle, float length, Bone2DChain child) {
+		public Hinge(float angle, float length, Hinge child) {
 			Angle = angle;
 			Length = length;
 			Child = child;
 		}
 
-		public List<VertexPositionColor> GetVertices() {
+		public IEnumerable<VertexPositionColor> GetVertices() {
 			var vertices = new List<VertexPositionColor>();
 
 			if (Parent == null) {
@@ -76,17 +87,17 @@ namespace LMPoser.Objects {
 					Color.Red
 				));
 				vertices.Add(new VertexPositionColor(
-					new Vector3(Position, 0f),
+					new Vector3(Resultant, 0f),
 					Color.Blue
 				));
 			}
 			else {
 				vertices.Add(new VertexPositionColor(
-					new Vector3(Parent.GlobalPosition, 0f),
+					new Vector3(Parent.GlobalResultant, 0f),
 					Color.Red
 				));
 				vertices.Add(new VertexPositionColor(
-					new Vector3(GlobalPosition, 0f),
+					new Vector3(GlobalResultant, 0f),
 					Color.Blue
 				));
 			}

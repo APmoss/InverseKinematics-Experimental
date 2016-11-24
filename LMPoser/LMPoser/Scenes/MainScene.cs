@@ -1,13 +1,18 @@
-﻿using LMPoser.Objects;
+﻿using LMPoser.Objects.Joint2D;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Project_GE.Framework.Input;
 using Project_GE.Framework.SceneManagement;
 using System;
+using System.Linq;
 
 namespace LMPoser.Scenes {
 	public class MainScene : Scene2D {
+		private const int WIDTH = 1280;
+		private const int HEIGHT = 720;
+
 		private GraphicsDevice graphics;
 		private BasicEffect effect;
 		private RasterizerState rasterizer;
@@ -16,7 +21,8 @@ namespace LMPoser.Scenes {
 
 		private Camera3D camera;
 
-		private Bone2DChain baseBone;
+		private Hinge baseJoint;
+		private Hinge focusJoint;
 
 		public override void Load(ContentManager content) {
 			graphics = SceneManager.GraphicsDevice;
@@ -29,7 +35,7 @@ namespace LMPoser.Scenes {
 			rasterizer.FillMode = FillMode.WireFrame;
 			rasterizer.CullMode = CullMode.None;
 
-			InitBones();
+			InitJoints();
 
 			base.Load(content);
 		}
@@ -38,10 +44,22 @@ namespace LMPoser.Scenes {
 			camera.Input(input, GameTime);
 
 			// TODO: dimensions
-			baseBone.Angle = (float)Math.Atan2(
-				-(input.CurrentMousePosition.Y - (720 / 2)),
-				input.CurrentMousePosition.X - (1280 / 2)
+			var toMouse = new Vector2(
+				input.CurrentMousePosition.X - (focusJoint.GlobalPosition.X + WIDTH / 2),
+				-input.CurrentMousePosition.Y + (-focusJoint.GlobalPosition.Y + HEIGHT / 2)
+
 			);
+			focusJoint.Angle = (float)Math.Atan2(
+				toMouse.Y,
+				toMouse.X
+			);
+
+			if (input.IsKeyPressed(Keys.M)) {
+				focusJoint = focusJoint.Child != null ? focusJoint.Child : focusJoint;
+			}
+			if (input.IsKeyPressed(Keys.N)) {
+				focusJoint = focusJoint.Parent != null ? focusJoint.Parent : focusJoint;
+			}
 
 			base.Input(input);
 		}
@@ -58,15 +76,17 @@ namespace LMPoser.Scenes {
 			base.Draw();
 		}
 
-		private void InitBones() {
-			baseBone = new Bone2DChain(MathHelper.ToRadians(30f));
+		private void InitJoints() {
+			baseJoint = new Hinge(MathHelper.ToRadians(30f));
 
-			baseBone.Child = new Bone2DChain(
+			baseJoint.Child = new Hinge(
 				0f,
-				new Bone2DChain(
+				new Hinge(
 					MathHelper.PiOver2
 				)
 			);
+
+			focusJoint = baseJoint;
 		}
 
 		private void UpdateEffect() {
@@ -81,9 +101,9 @@ namespace LMPoser.Scenes {
 
 				graphics.RasterizerState = rasterizer;
 
-				var vertices = baseBone.GetVertices();
+				var vertices = baseJoint.GetVertices();
 
-				graphics.DrawUserPrimitives(PrimitiveType.LineList, vertices.ToArray(), 0, vertices.Count / 2);
+				graphics.DrawUserPrimitives(PrimitiveType.LineList, vertices.ToArray(), 0, vertices.Count() / 2);
 			}
 		}
 	}
