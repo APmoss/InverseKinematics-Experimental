@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<theme texture="textures/lightTheme" font="fonts/gillSansMT_14">
+  <text_tint>0,0,0,255</text_tint>
+  <source_recs>
+    <button_corner>1,1,3,3</button_corner>
+    <button_side>1,7,3,1</button_side>
+    <button_center>7,7,1,1</button_center>
+
+    <button_focus_corner>1,17,3,3</button_focus_corner>
+    <button_focus_side>1,23,3,1</button_focus_side>
+    <button_focus_center>7,23,1,1</button_focus_center>
+
+    <button_pressed_corner>1,33,3,3</button_pressed_corner>
+    <button_pressed_side>1,39,3,1</button_pressed_side>
+    <button_pressed_center>7,39,1,1</button_pressed_center>
+    
+    <checkbox>22,6,20,20</checkbox>
+    <checkbox_focus>22,38,20,20</checkbox_focus>
+    <checkbox_pressed>22,70,20,20</checkbox_pressed>
+    <checkmark_checked>32,96,16,16</checkmark_checked>
+    <checkmark_unchecked>16,96,16,16</checkmark_unchecked>
+
+    <scrollbar_background_corner>49,1,6,6</scrollbar_background_corner>
+    <scrollbar_background_side>49,11,6,1</scrollbar_background_side>
+    <scrollbar_background_center>60,11,1,1</scrollbar_background_center>
+    <scrollbar_corner>49,17,6,6</scrollbar_corner>
+    <scrollbar_side>49,27,6,1</scrollbar_side>
+    <scrollbar_center>60,27,1,1</scrollbar_center>
+    
+    <panel_corner>65,1,3,3</panel_corner>
+    <panel_side>65,7,3,1</panel_side>
+    <panel_center>71,7,1,1</panel_center>
+  </source_recs>
+</theme>

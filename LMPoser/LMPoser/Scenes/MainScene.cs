@@ -3,13 +3,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Project_GE.Framework.Gui.Controls;
 using Project_GE.Framework.Input;
 using Project_GE.Framework.SceneManagement;
 using System;
 using System.Linq;
 
 namespace LMPoser.Scenes {
-	public class MainScene : Scene2D {
+	public class MainScene : Scene2DGui {
 		private const int WIDTH = 1280;
 		private const int HEIGHT = 720;
 
@@ -23,6 +24,12 @@ namespace LMPoser.Scenes {
 
 		private Hinge baseJoint;
 		private Hinge focusJoint;
+
+		TextBlock text;
+
+		public MainScene()
+			: base(new Rectangle(0, 0, WIDTH, HEIGHT), "Content/GuiThemes/LightTheme.xml") {
+		}
 
 		public override void Load(ContentManager content) {
 			graphics = SceneManager.GraphicsDevice;
@@ -38,6 +45,15 @@ namespace LMPoser.Scenes {
 			InitJoints();
 
 			base.Load(content);
+
+			var panel = new Panel(new Rectangle(10, 10, 300, 500));
+			text = new TextBlock("A", 0, 0);
+
+			panel.AddChildren(text);
+
+			Gui.BaseContainer.AddChildren(
+				panel
+			);
 		}
 
 		public override void Input(InputManager input) {
@@ -67,10 +83,15 @@ namespace LMPoser.Scenes {
 		public override void Update() {
 			UpdateEffect();
 
+			text.Text = "Current Joint Angle: " + focusJoint.Angle;
+			text.AutoAdjustWidth();
+
 			base.Update();
 		}
 
 		public override void Draw() {
+			graphics.Clear(Color.Black);
+
 			DrawBones();
 
 			base.Draw();
