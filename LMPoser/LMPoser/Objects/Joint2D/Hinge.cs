@@ -63,6 +63,17 @@ namespace LMPoser.Objects.Joint2D {
 			}
 		}
 
+		public Vector2 EndEffector {
+			get {
+				if (Child == null) {
+					return GlobalResultant;
+				}
+				else {
+					return Child.EndEffector;
+				}
+			}
+		}
+
 		public Hinge(float angle)
 			: this(angle, DEFAULT_LENGTH) {
 		}
@@ -76,6 +87,14 @@ namespace LMPoser.Objects.Joint2D {
 			Angle = angle;
 			Length = length;
 			Child = child;
+		}
+		public Hinge(Hinge hinge) {
+			Angle = hinge.Angle;
+			Length = hinge.Length;
+			
+			if (hinge.Child != null) {
+				Child = new Hinge(hinge.Child);
+			}
 		}
 
 		public IEnumerable<VertexPositionColor> GetVertices() {
@@ -133,6 +152,46 @@ namespace LMPoser.Objects.Joint2D {
 			}
 
 			return lines;
+		}
+
+		public void UpdateDoFChain(LinkedList<float> dofs) {
+			Angle = dofs.First.Value;
+
+			dofs.RemoveFirst();
+
+			if (dofs.Count > 0 && Child != null) {
+				Child.UpdateDoFChain(dofs);
+			}
+		}
+		public void ApplyDofDeltas(LinkedList<float> deltas) {
+			Angle += deltas.First.Value;
+
+			deltas.RemoveFirst();
+
+			if (deltas.Count > 0 && Child != null) {
+				Child.ApplyDofDeltas(deltas);
+			}
+		}
+
+		public int Size() {
+			if (Child == null) {
+				return 1;
+			}
+			else {
+				return 1 + Child.Size();
+			}
+		}
+
+		public Vector2 NumericalJacobianColumn() {
+			var copy = new Hinge(this);
+			copy.Parent = Parent;
+
+			copy.Angle += MathHelper.ToRadians(0.1f);
+
+			var oldE = EndEffector;
+			var newE = copy.EndEffector;
+
+			return newE - oldE;
 		}
 	}
 }
