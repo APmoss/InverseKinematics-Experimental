@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="Camera3D.cs" />
     <Compile Include="Entry.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Objects\Joint2D\Hinge.cs" />
     <Compile Include="Objects\PseudoMatrix.cs" />
     <Compile Include="Program.cs" />

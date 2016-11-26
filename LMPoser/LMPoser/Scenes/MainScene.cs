@@ -15,6 +15,7 @@ namespace LMPoser.Scenes {
 	public class MainScene : Scene2DGui {
 		private const int WIDTH = 1280;
 		private const int HEIGHT = 720;
+		private const float BETA = 0.001f;
 
 		private GraphicsDevice graphics;
 		private BasicEffect effect;
@@ -111,6 +112,12 @@ namespace LMPoser.Scenes {
 			if (input.IsKeyDown(Keys.K)) {
 				JIIterate();
 			}
+			if (input.IsKeyDown(Keys.L)) {
+				CCDIterate();
+			}
+			if (input.IsKeyDown(Keys.OemSemicolon)) {
+				DLSIterate();
+			}
 			if (input.IsKeyDown(Keys.U)) {
 				goal = input.CurrentMousePosition.ToVector2();
 				goal -= new Vector2(WIDTH / 2, HEIGHT / 2);
@@ -150,11 +157,11 @@ namespace LMPoser.Scenes {
 		}
 
 		private void InitJoints() {
-			baseJoint = new Hinge(MathHelper.ToRadians(30f),
+			baseJoint = new Hinge(MathHelper.PiOver4,
 				new Hinge(
-				0f,
+				MathHelper.PiOver4,
 					new Hinge(
-						MathHelper.PiOver2,
+						MathHelper.PiOver4,
 						new Hinge(
 							MathHelper.PiOver4
 						)
@@ -206,16 +213,9 @@ namespace LMPoser.Scenes {
 		}
 
 		private void JTIterate() {
+			var jacobian = ComputeJacobian();
 			var deltaE = goal - baseJoint.EndEffector;
-			deltaE *= 0.01f;
-			var jacobian = new List<Vector2>();
-			var focus = baseJoint;
-
-			while (focus != null) {
-				jacobian.Add(focus.NumericalJacobianColumn());
-
-				focus = focus.Child;
-			}
+			deltaE *= BETA;
 
 			var deltaPhi = new LinkedList<float>();
 
@@ -226,20 +226,13 @@ namespace LMPoser.Scenes {
 			baseJoint.ApplyDofDeltas(deltaPhi);
 		}
 		private void JIIterate() {
+			var jacobian = ComputeJacobian();
 			var deltaE = goal - baseJoint.EndEffector;
-			deltaE *= 0.001f;
-			var jacobian = new List<Vector2>();
-			var focus = baseJoint;
-
-			while (focus != null) {
-				jacobian.Add(focus.NumericalJacobianColumn());
-
-				focus = focus.Child;
-			}
+			deltaE *= BETA;
 
 			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
 
-			var inverse = jacobianMat.Transpose() * (jacobianMat * jacobianMat.Transpose()).Inverse();
+			var inverse = jacobianMat.PseudoInverse();
 
 			var deltaPhi = new LinkedList<float>();
 
@@ -248,6 +241,65 @@ namespace LMPoser.Scenes {
 			}
 
 			baseJoint.ApplyDofDeltas(deltaPhi);
+		}
+
+		private void CCDIterate() {
+			var focus = baseJoint;
+
+			while (focus != null) {
+				var toE = focus.EndEffector - focus.GlobalPosition;
+				var toG = goal - focus.GlobalPosition;
+
+				var eAngle = Math.Atan2(toE.Y, toE.X);
+				var gAngle = Math.Atan2(toG.Y, toG.X);
+
+				focus.Angle += ((float)(gAngle - eAngle));
+
+				focus = focus.Child;
+			}
+		}
+
+		private void DLSIterate() {
+			var jacobian = ComputeJacobian();
+			var deltaE = goal - baseJoint.EndEffector;
+			deltaE *= BETA;
+			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
+
+			var lambda = BETA;
+			var lambdaMatrix = lambda * lambda * CreateMatrix.DenseIdentity<float>(jacobianMat.RowCount);
+			var deltaPhiVec =
+				jacobianMat.Transpose() *
+				(jacobianMat * jacobianMat.Transpose() + (lambdaMatrix)).Inverse() *
+				CreateVector.DenseOfArray(new float[] { deltaE.X, deltaE.Y });
+			var deltaPhi = new LinkedList<float>(deltaPhiVec);
+
+			baseJoint.ApplyDofDeltas(deltaPhi);
+		}
+
+		private List<Vector2> ComputeJacobian() {
+			var jacobian = new List<Vector2>();
+			var deltaE = goal - baseJoint.EndEffector;
+			deltaE *= BETA;
+			var focus = baseJoint;
+
+			while (focus != null) {
+				jacobian.Add(focus.NumericalJacobianColumn());
+
+				focus = focus.Child;
+			}
+
+			return jacobian;
+		}
+
+		private void SimpleLine(Vector2 start, Vector2 end) {
+			vertices.Add(new VertexPositionColor(
+				new Vector3(start, 0),
+				Color.White
+			));
+			vertices.Add(new VertexPositionColor(
+				new Vector3(end, 0),
+				Color.White
+			));
 		}
 	}
 }

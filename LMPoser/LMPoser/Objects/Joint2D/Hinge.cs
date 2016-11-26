@@ -12,6 +12,16 @@ namespace LMPoser.Objects.Joint2D {
 		public float Angle {
 			get; set;
 		}
+		public float GlobalAngle {
+			get {
+				if (Parent == null) {
+					return Angle;
+				}
+				else {
+					return Angle + Parent.GlobalAngle;
+				}
+			}
+		}
 
 		public float Length {
 			get; private set;
@@ -20,8 +30,8 @@ namespace LMPoser.Objects.Joint2D {
 		public Vector2 Resultant {
 			get {
 				return new Vector2(
-					(float)Math.Cos(Angle),
-					(float)Math.Sin(Angle)
+					(float)Math.Cos(GlobalAngle),
+					(float)Math.Sin(GlobalAngle)
 				) * Length;
 			}
 		}
@@ -126,32 +136,6 @@ namespace LMPoser.Objects.Joint2D {
 			}
 
 			return vertices;
-		}
-
-		public List<short> GetLines() {
-			var lines = new List<short>();
-
-			lines.Add(0);
-			lines.Add(1);
-
-			if (_child != null) {
-				lines.AddRange(_child.GetLines(2));
-			}
-
-			return lines;
-		}
-
-		private List<short> GetLines(int depth) {
-			var lines = new List<short>();
-
-			lines.Add((short)(depth - 1));
-			lines.Add((short)depth);
-			
-			if (_child != null) {
-				lines.AddRange(_child.GetLines(depth + 1));
-			}
-
-			return lines;
 		}
 
 		public void UpdateDoFChain(LinkedList<float> dofs) {
