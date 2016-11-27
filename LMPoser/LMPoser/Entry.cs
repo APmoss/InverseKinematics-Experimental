@@ -15,7 +15,7 @@ namespace LMPoser {
 			sceneManager = new SceneManager(this);
 			Components.Add(sceneManager);
 
-			sceneManager.AddScene(new Scenes.MainScene());
+			sceneManager.AddScene(new Scenes.MenuScene());
 		}
 
 		private void InitialSettings() {

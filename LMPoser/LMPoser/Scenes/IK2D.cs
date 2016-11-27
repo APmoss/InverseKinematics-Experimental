@@ -12,7 +12,7 @@ using System.Linq;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace LMPoser.Scenes {
-	public class MainScene : Scene2DGui {
+	public class IK2D : Scene2DGui {
 		private const int WIDTH = 1280;
 		private const int HEIGHT = 720;
 		private const float BETA = 0.001f;
@@ -36,8 +36,10 @@ namespace LMPoser.Scenes {
 		TextBlock goalText;
 		TextBlock sizeText;
 
-		public MainScene()
+		public IK2D()
 			: base(new Rectangle(0, 0, WIDTH, HEIGHT), "Content/GuiThemes/LightTheme.xml") {
+
+			CapturesInput = true;
 		}
 
 		public override void Load(ContentManager content) {
@@ -69,7 +71,7 @@ namespace LMPoser.Scenes {
 
 		public override void Input(InputManager input) {
 			if (input.IsKeyPressed(Keys.Escape)) {
-				SceneManager.Game.Exit();
+				Exit();
 			}
 
 			camera.Input(input, GameTime);
@@ -183,8 +185,9 @@ namespace LMPoser.Scenes {
 				pass.Apply();
 
 				graphics.RasterizerState = rasterizer;
-
-				graphics.DrawUserPrimitives(PrimitiveType.LineList, vertices.ToArray(), 0, vertices.Count() / 2);
+				if (vertices.Count > 0) {
+					graphics.DrawUserPrimitives(PrimitiveType.LineList, vertices.ToArray(), 0, vertices.Count() / 2);
+				}
 			}
 		}
 
