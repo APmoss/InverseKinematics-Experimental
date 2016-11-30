@@ -108,18 +108,35 @@ namespace LMPoser.Scenes {
 				focusJoint = baseJoint;
 			}
 
-			if (input.IsKeyDown(Keys.J)) {
-				JTIterate();
+			if (input.IsKeyDown(Keys.LeftShift) || input.IsKeyDown(Keys.RightShift)) {
+				if (input.IsKeyPressed(Keys.J)) {
+					JTIterate();
+				}
+				if (input.IsKeyPressed(Keys.K)) {
+					JIIterate();
+				}
+				if (input.IsKeyPressed(Keys.L)) {
+					CCDIterate();
+				}
+				if (input.IsKeyPressed(Keys.OemSemicolon)) {
+					DLSIterate();
+				}
 			}
-			if (input.IsKeyDown(Keys.K)) {
-				JIIterate();
+			else {
+				if (input.IsKeyDown(Keys.J)) {
+					JTIterate();
+				}
+				if (input.IsKeyDown(Keys.K)) {
+					JIIterate();
+				}
+				if (input.IsKeyDown(Keys.L)) {
+					CCDIterate();
+				}
+				if (input.IsKeyDown(Keys.OemSemicolon)) {
+					DLSIterate();
+				}
 			}
-			if (input.IsKeyDown(Keys.L)) {
-				CCDIterate();
-			}
-			if (input.IsKeyDown(Keys.OemSemicolon)) {
-				DLSIterate();
-			}
+			
 			if (input.IsKeyDown(Keys.U)) {
 				goal = input.CurrentMousePosition.ToVector2();
 				goal -= new Vector2(WIDTH / 2, HEIGHT / 2);
@@ -235,11 +252,12 @@ namespace LMPoser.Scenes {
 
 			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
 
-			var inverse = jacobianMat.PseudoInverse();
+			var inverse = jacobianMat.GeneralizedInverse();
+			var pInverse = jacobianMat.SVDPseudoInverse();
 
 			var deltaPhi = new LinkedList<float>();
 
-			foreach (var row in inverse.ToRowArrays()) {
+			foreach (var row in pInverse.ToRowArrays()) {
 				deltaPhi.AddLast((deltaE.X * row[0]) + (deltaE.Y * row[1]));
 			}
 
@@ -266,15 +284,16 @@ namespace LMPoser.Scenes {
 			var jacobian = ComputeJacobian();
 			var deltaE = goal - baseJoint.EndEffector;
 			deltaE *= BETA;
+
 			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
 
-			var lambda = BETA;
+			var lambda = .5f;
 			var lambdaMatrix = lambda * lambda * CreateMatrix.DenseIdentity<float>(jacobianMat.RowCount);
 			var deltaPhiVec =
 				jacobianMat.Transpose() *
 				(jacobianMat * jacobianMat.Transpose() + (lambdaMatrix)).Inverse() *
 				CreateVector.DenseOfArray(new float[] { deltaE.X, deltaE.Y });
-			var deltaPhi = new LinkedList<float>(deltaPhiVec);
+			var deltaPhi = new LinkedList<float>(deltaPhiVec.ToArray());
 
 			baseJoint.ApplyDofDeltas(deltaPhi);
 		}
@@ -292,6 +311,18 @@ namespace LMPoser.Scenes {
 			}
 
 			return jacobian;
+		}
+
+		private Vector2 SafeDeltaE(Vector2 goal, Vector2 endE) {
+			var deltaE = goal - endE;
+			var length = deltaE.Length();
+
+			if (length > 3) {
+				var mult = 3 / length;
+				deltaE *= mult;
+			}
+
+			return deltaE;
 		}
 
 		private void SimpleLine(Vector2 start, Vector2 end) {
