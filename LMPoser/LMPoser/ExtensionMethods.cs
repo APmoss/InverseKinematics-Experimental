@@ -21,7 +21,8 @@ namespace LMPoser {
 
 				var u = svd.U;
 				var dVec = svd.S;
-				var dStar = CreateMatrix.Diagonal(mat.RowCount, mat.RowCount, (x) => dVec[x] < 0.01 ? 0f : 1f / dVec[x]);
+				var dStar = CreateMatrix.Diagonal(mat.RowCount, mat.RowCount, (x) => dVec[x] < 10 ? 0f : 1f / dVec[x]);
+
 				var vt = svd.VT;
 
 				while (vt.RowCount > mat.RowCount) {

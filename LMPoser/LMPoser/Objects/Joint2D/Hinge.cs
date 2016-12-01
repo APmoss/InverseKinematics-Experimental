@@ -177,5 +177,17 @@ namespace LMPoser.Objects.Joint2D {
 
 			return newE - oldE;
 		}
+
+		public Vector2 AnalyticalJacobianColumn() {
+			var e = EndEffector;
+			var r = GlobalPosition;
+			var a = new Vector3(0, 0, 1);
+
+			var er = new Vector3(e - r, 0);
+
+			var partial = Vector3.Cross(a, er);
+
+			return new Vector2(partial.X, partial.Y);
+		}
 	}
 }

@@ -234,21 +234,22 @@ namespace LMPoser.Scenes {
 
 		private void JTIterate() {
 			var jacobian = ComputeJacobian();
-			var deltaE = goal - baseJoint.EndEffector;
-			deltaE *= BETA;
+			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
+			var deltaE = SafeDeltaE(goal, baseJoint.EndEffector);
 
-			var deltaPhi = new LinkedList<float>();
+			var deltaEVec = CreateVector.Dense(new float[] { deltaE.X, deltaE.Y });
+			var denom = (jacobianMat * jacobianMat.Transpose() * deltaEVec).L2Norm();
 
-			foreach (var column in jacobian) {
-				deltaPhi.AddLast((deltaE.X * column.X) + (deltaE.Y * column.Y));
-			}
+			var lambda = (deltaEVec * jacobianMat * jacobianMat.Transpose() * deltaEVec) / (denom * denom);
+
+			var deltaPhiVec = (float)lambda * jacobianMat.Transpose() * deltaEVec;
+			var deltaPhi = new LinkedList<float>(deltaPhiVec.ToArray());
 
 			baseJoint.ApplyDofDeltas(deltaPhi);
 		}
 		private void JIIterate() {
 			var jacobian = ComputeJacobian();
-			var deltaE = goal - baseJoint.EndEffector;
-			deltaE *= BETA;
+			var deltaE = SafeDeltaE(goal, baseJoint.EndEffector);
 
 			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
 
@@ -282,8 +283,7 @@ namespace LMPoser.Scenes {
 
 		private void DLSIterate() {
 			var jacobian = ComputeJacobian();
-			var deltaE = goal - baseJoint.EndEffector;
-			deltaE *= BETA;
+			var deltaE = SafeDeltaE(goal, baseJoint.EndEffector);
 
 			var jacobianMat = CreateMatrix.Dense(2, jacobian.Count, (row, col) => row == 0 ? jacobian[col].X : jacobian[col].Y);
 
@@ -300,12 +300,10 @@ namespace LMPoser.Scenes {
 
 		private List<Vector2> ComputeJacobian() {
 			var jacobian = new List<Vector2>();
-			var deltaE = goal - baseJoint.EndEffector;
-			deltaE *= BETA;
 			var focus = baseJoint;
 
 			while (focus != null) {
-				jacobian.Add(focus.NumericalJacobianColumn());
+				jacobian.Add(focus.AnalyticalJacobianColumn());
 
 				focus = focus.Child;
 			}
@@ -314,11 +312,13 @@ namespace LMPoser.Scenes {
 		}
 
 		private Vector2 SafeDeltaE(Vector2 goal, Vector2 endE) {
+			var maxMag = 100;
 			var deltaE = goal - endE;
 			var length = deltaE.Length();
 
-			if (length > 3) {
-				var mult = 3 / length;
+
+			if (length > maxMag) {
+				var mult = maxMag / length;
 				deltaE *= mult;
 			}
 
