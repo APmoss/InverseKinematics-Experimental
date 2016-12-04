@@ -33,9 +33,13 @@ namespace LMPoser {
 			get; set;
 		} = 1000f;
 
+		public float Speed {
+			get; set;
+		} = 10f;
+
 		public void Input(InputManager input, GameTime time) {
 			var delta = (float)time.ElapsedGameTime.TotalSeconds;
-			var speed = 100 * delta;
+			var speed = Speed * delta;
 
 			if (input.IsKeyDown(Keys.W)) {
 				Position += Vector3.Transform(Vector3.Forward, Orientation) * speed;
