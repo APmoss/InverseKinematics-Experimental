@@ -76,7 +76,6 @@ namespace LMPoser.Scenes {
 
 			camera.Input(input, GameTime);
 
-			// TODO: dimensions
 			if (updateFocusJoint) {
 				var toMouse = new Vector2(
 					input.CurrentMousePosition.X - (focusJoint.GlobalPosition.X + WIDTH / 2),
@@ -137,10 +136,17 @@ namespace LMPoser.Scenes {
 				}
 			}
 			
-			if (input.IsKeyDown(Keys.U)) {
+			if (input.IsMouseDown(MouseButtons.Left)) {
 				goal = input.CurrentMousePosition.ToVector2();
 				goal -= new Vector2(WIDTH / 2, HEIGHT / 2);
 				goal.Y = -goal.Y;
+
+				var dist = Vector2.Distance(goal, Vector2.Zero);
+				var rad = baseJoint.SolutionSpaceRadius();
+
+				if (dist > rad) {
+					goal *= rad / dist;
+				}
 			}
 
 			base.Input(input);
@@ -151,6 +157,7 @@ namespace LMPoser.Scenes {
 
 			vertices.AddRange(baseJoint.GetVertices());
 			vertices.AddRange(GetCircle(goal, 5, 5, Color.Green));
+			vertices.AddRange(GetCircle(Vector2.Zero, baseJoint.SolutionSpaceRadius(), 100, Color.DarkRed));
 
 			UpdateEffect();
 
@@ -183,9 +190,9 @@ namespace LMPoser.Scenes {
 						MathHelper.PiOver4,
 						new Hinge(
 							MathHelper.PiOver4
-						)
-					)
-				)
+						) { AngleLimitLower = -2f, AngleLimitUpper = 2f }
+					) { AngleLimitLower = -2f, AngleLimitUpper = 2f }
+				) { AngleLimitLower = -2f, AngleLimitUpper = 2f }
 			);
 
 			focusJoint = baseJoint;

@@ -16,14 +16,32 @@ namespace LMPoser.Scenes {
 		public override void Load(ContentManager content) {
 			base.Load(content);
 
-			var panel = new Panel(new Rectangle(0, 0, 400, 300));
-			var ik2dButton = new Button("2D Inverse Kinematics Demo", 10, 10);
+			var panelW = 400;
+			var panelH = 450;
+
+			var panel = new Panel(new Rectangle(WIDTH / 2 - panelW / 2, HEIGHT / 2 - panelH / 2, panelW, panelH));
+
+			panel.AddChildren(new TextBlock("Inverse Kinematics Demos", 10, 0));
+
+			var instructionButton = new Button("Instructions", 10, 60);
+			instructionButton.Clicked += (s, e) => SceneManager.AddScene(new InstructionScene());
+
+			var comparisonButton = new Button("Comparison Inverse Kinematics Demo", 10, 120);
+			comparisonButton.Clicked += (s, e) => SceneManager.AddScene(new ComparisonScene());
+
+			var angleLimitButton = new Button("Angle Limit Inverse Kinematics Demo", 10, 170);
+			angleLimitButton.Clicked += (s, e) => SceneManager.AddScene(new AngleLimitScene());
+
+			var varianceButton = new Button("Variance Inverse Kinematics Demo", 10, 220);
+			varianceButton.Clicked += (s, e) => SceneManager.AddScene(new VarianceScene());
+
+			var constraintButton = new Button("Constraint Inverse Kinematics Demo", 10, 270);
+			constraintButton.Clicked += (s, e) => SceneManager.AddScene(new ConstraintScene());
+
+			var ik2dButton = new Button("Live Demo Only", 10, 340);
 			ik2dButton.Clicked += (s, e) => SceneManager.AddScene(new IK2D());
 
-			var ik3dButton = new Button("3D Inverse Kinematics Demo", 10, 60);
-			ik3dButton.Clicked += (s, e) => SceneManager.AddScene(new IK3D());
-
-			panel.AddChildren(ik2dButton, ik3dButton);
+			panel.AddChildren(instructionButton, ik2dButton, comparisonButton, angleLimitButton, varianceButton, constraintButton);
 			Gui.BaseContainer.AddChildren(panel);
 		}
 
@@ -33,6 +51,12 @@ namespace LMPoser.Scenes {
 			}
 
 			base.Input(input);
+		}
+
+		public override void Draw() {
+			SceneManager.Game.GraphicsDevice.Clear(new Color(0, 0, 50));
+
+			base.Draw();
 		}
 	}
 }

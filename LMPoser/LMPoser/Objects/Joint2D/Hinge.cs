@@ -7,10 +7,19 @@ namespace LMPoser.Objects.Joint2D {
 	public class Hinge {
 		private const float DEFAULT_LENGTH = 100f;
 
+		private float _angle;
 		private Hinge _child;
 
 		public float Angle {
-			get; set;
+			get {
+				return _angle;
+			}
+			set {
+				var lower = AngleLimitLower ?? value;
+				var upper = AngleLimitUpper ?? value;
+
+				_angle = MathHelper.Clamp(value, lower, upper);
+			}
 		}
 		public float GlobalAngle {
 			get {
@@ -23,16 +32,28 @@ namespace LMPoser.Objects.Joint2D {
 			}
 		}
 
+		public float? AngleLimitUpper {
+			get; set;
+		} = null;
+		public float? AngleLimitLower {
+			get; set;
+		} = null;
+
 		public float Length {
-			get; private set;
+			get; set;
 		}
+
+		public Vector2 DefaultPosition {
+			get; set;
+		} = Vector2.Zero;
 
 		public Vector2 Resultant {
 			get {
-				return new Vector2(
-					(float)Math.Cos(GlobalAngle),
-					(float)Math.Sin(GlobalAngle)
-				) * Length;
+				return DefaultPosition +
+					new Vector2(
+						(float)Math.Cos(GlobalAngle),
+						(float)Math.Sin(GlobalAngle)
+					) * Length;
 			}
 		}
 
@@ -50,7 +71,7 @@ namespace LMPoser.Objects.Joint2D {
 		public Vector2 GlobalPosition {
 			get {
 				if (Parent == null) {
-					return Vector2.Zero;
+					return DefaultPosition;
 				}
 				else {
 					return Parent.GlobalResultant;
@@ -112,7 +133,7 @@ namespace LMPoser.Objects.Joint2D {
 
 			if (Parent == null) {
 				vertices.Add(new VertexPositionColor(
-					Vector3.Zero,
+					new Vector3(GlobalPosition, 0f),
 					Color.Red
 				));
 				vertices.Add(new VertexPositionColor(
@@ -188,6 +209,16 @@ namespace LMPoser.Objects.Joint2D {
 			var partial = Vector3.Cross(a, er);
 
 			return new Vector2(partial.X, partial.Y);
+		}
+
+		public float SolutionSpaceRadius() {
+			var radius = Length;
+
+			if (Child != null) {
+				radius += Child.SolutionSpaceRadius();
+			}
+
+			return radius;
 		}
 	}
 }
