@@ -1,2 +1,2 @@
-# LM-Poser
-Model Poser using the Leap Motion.
+# InverseKinematics-Experimental
+Sandbox for testing Inverse Kinematics concepts.
